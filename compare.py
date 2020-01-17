@@ -22,7 +22,8 @@ def FENrarity(fen, move):
         r = cachedfen
     else:
         while True:
-            r = requests.get(f'https://explorer.lichess.ovh/master?fen={fen}&topGames=0&moves=30')
+            payload = {'fen': fen, 'topGames': 0, 'moves': 30}
+            r = requests.get(f'https://explorer.lichess.ovh/master', params=payload)
             if r.status_code == 200:
                 time.sleep(0.25)
                 r = r.json()
@@ -47,12 +48,13 @@ def defineReps(pgnfilepath):
     
     pgn = open(pgnfilepath)
     players = defaultdict(int)
+
     while True:
-        game = chess.pgn.read_game(pgn)
-        if not game:
+        headers = chess.pgn.read_headers(pgn)
+        if not headers:
             break
-        players[game.headers['White']] += 1
-        players[game.headers['Black']] += 1
+        players[headers.get('White')] += 1
+        players[headers.get('Black')] += 1
     player = max(players.items(), key=lambda a: a[1])[0]
 
     def getPlayerColour(game):
@@ -69,8 +71,8 @@ def defineReps(pgnfilepath):
         gamenum += 1
         board = game.board()
         player_colour = getPlayerColour(game)
-        for n, move in enumerate(game.main_line()):
-            storedfen = " ".join(board.fen().split()[:2])
+        for n, move in enumerate(game.mainline_moves()):
+            storedfen = board.epd()
             board.push(move)
             if (n + player_colour) % 2 != 0: #skip opponents' moves
                 continue
@@ -79,11 +81,11 @@ def defineReps(pgnfilepath):
                 break
     return player_moves
 
-rep1 = defineReps('pgns/lichess_somethingpretentious_2020-01-16.pgn')
+rep2 = defineReps('pgns/lichess_somethingpretentious_2020-01-16.pgn')
 #rep1 = defineReps('pgns/lichess_bufferunderrun_2020-01-15.pgn')
 #rep2 = defineReps('pgns/lichess_bufferunderrun_2020-01-15.pgn')
+rep1 = defineReps('pgns/lichess_somethingpretentious_2020-01-15.pgn')
 #rep2 = defineReps('pgns/lichess_somethingpretentious_2020-01-15.pgn')
-rep2 = defineReps('pgns/lichess_somethingpretentious_2020-01-15.pgn')
 
 def compareReps(rep1, rep2):
     score = 0
@@ -96,7 +98,7 @@ def compareReps(rep1, rep2):
             p1score = rep1[move]
             score += min(p1score, p2score) * min(p1score, p2score) * rarity
     potential = sum([x*x*y for x, y in zip(rep1.values(), rarities)])
-    return((1000*score)/potential) 
+    return((score)/potential) 
 
 print(compareReps(rep1, rep2))
 

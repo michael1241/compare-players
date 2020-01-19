@@ -4,10 +4,10 @@ import requests
 import chess.pgn
 from collections import defaultdict
 
-#API request https://lichess.org/api/games/user/{USER}?max=20&rated=true&ongoing=false&perfType=blitz,rapid,classical
+#API request https://lichess.org/api/games/user/{USER}?max=100&rated=true&ongoing=false&perfType=blitz,rapid,classical
 
 depth = 20
-desiredgames = 20
+desiredgames = 100
 
 
 def defineReps(pgnfilepath):
@@ -48,16 +48,14 @@ def defineReps(pgnfilepath):
     return player_moves
 
 library = [
-'pgns/lichess_somethingpretentious_2020-01-16.pgn',
-'pgns/lichess_bufferunderrun_2020-01-15.pgn',
-'pgns/lichess_somethingpretentious_2020-01-15.pgn',
-'pgns/lichess_quirked_2020-01-17.pgn',
-'pgns/lichess_glbert_2020-01-17(1).pgn',
-'pgns/lichess_MMichael_2020-01-17.pgn',
-'pgns/lichess_TheFinnisher_2020-01-17.pgn']
+'pgns/lichess_somethingpretentious_2020-01-17_100games.pgn',
+'pgns/Gholami_Orimi_A-TA.pgn',
+'pgns/ChessGrunt2002-bullet.pgn',
+'pgns/lichess_TheFinnisher_2020-01-17.pgn',
+'pgns/lichess_MMichael_2020-01-17.pgn']
 
-rep1 = defineReps(library[5])
-rep2 = defineReps(library[6])
+rep1 = defineReps(library[1])
+rep2 = defineReps(library[2])
 
 def compareReps(rep1, rep2):
     score = 0
@@ -70,4 +68,4 @@ def compareReps(rep1, rep2):
     potential = sum([x*x for x in rep1.values()])
     return(score/potential) 
 
-print(compareReps(rep1, rep2))
+print((compareReps(rep1, rep2) + compareReps(rep2, rep1))/2)

@@ -33,7 +33,7 @@ def main(file1, file2, depth, desiredgames):
                     print("waiting 5 seconds")
                     time.sleep(5)
                     continue
-        FENdict[fen] = r
+            FENdict[fen] = r
 
         freqs = {}
         dbmoves = {m['uci']: m['white']+m['draws']+m['black'] for m in r['moves']}
@@ -109,11 +109,10 @@ def main(file1, file2, depth, desiredgames):
         #potential = sum([x*x*y for x, y in zip(rep1.values(), rarities)])
         return(score) 
 
-    with open('mastersdbcache', 'wb') as db:
-        pickle.dump(FENdict, db)
-
     rep1 = defineReps(file1)
     rep2 = defineReps(file2)
-    return (compareReps(rep1, rep2) + compareReps(rep2, rep1))/2
+    answer = (compareReps(rep1, rep2) + compareReps(rep2, rep1))/2
 
-
+    with open('mastersdbcache', 'wb') as db:
+        pickle.dump(FENdict, db)
+    return answer

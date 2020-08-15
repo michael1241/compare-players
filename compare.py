@@ -2,8 +2,11 @@
 
 import requests
 import chess.pgn
+import math
 import numpy as np
 import pandas as pd
+import seaborn as sn
+import matplotlib.pyplot as plt
 from collections import defaultdict
 from scipy import spatial
 
@@ -55,28 +58,23 @@ def defineRep(pgnfilepath):
     return pos_dict
 
 library = [
-'pgns/lichess_somethingpretentious_2020-01-17_100games.pgn',
+'pgns/vera90-bullet-ta.pgn',
 'pgns/Gholami_Orimi_A-TA.pgn',
+'pgns/Fuger-blitz.pgn',
 'pgns/ChessGrunt2002-bullet.pgn',
-'pgns/lichess_TheFinnisher_2020-01-17.pgn',
-'pgns/lichess_MMichael_2020-01-17.pgn']
+'pgns/TheFinnisher.pgn',
+'pgns/MMichael.pgn']
 
 #print(defineRep(library[1]))
 
 def compareReps(rep1, rep2):
     def standardise(moves1, moves2):
-        m1 = list(moves1.keys())
-        m2 = list(moves2.keys())
-        m1.extend(m2)
-        allmoves = list(set(m1))
+        allmoves = set(moves1.keys()) | set(moves2.keys())
         moves1 = [moves1.get(move, 0) for move in allmoves]
         moves2 = [moves2.get(move, 0) for move in allmoves]
         return moves1, moves2
 
-    fen1 = list(rep1.keys())
-    fen2 = list(rep2.keys())
-    fen1.extend(fen2)
-    allfens = list(set(fen1))
+    allfens = set(rep1.keys()) | set(rep2.keys())
 
     score = 0
     for fen in allfens:
@@ -84,13 +82,21 @@ def compareReps(rep1, rep2):
         cos = 1 - spatial.distance.cosine(moves1, moves2)
         if not np.isnan(cos):
             score += cos
-    return score
+    return math.log(score)
 
 reps = {}
 for player in library:
     reps[player] = defineRep(player)
     print(f'Done {player}')
 
+df = pd.DataFrame(columns=['p1', 'p2', 'score'])
+
 for player1 in reps:
     for player2 in reps:
-        print(player1, player2, compareReps(reps[player1], reps[player2]))
+        df_add = pd.DataFrame({'p1': [player1], 'p2': [player2], 'score': [compareReps(reps[player1], reps[player2])]})
+        df = df.append(df_add, ignore_index=True)
+
+df = pd.crosstab(df.p1, df.p2, values=df.score, aggfunc=sum)
+
+sn.heatmap(df, annot=True)
+plt.show()

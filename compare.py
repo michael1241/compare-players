@@ -8,9 +8,10 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from itertools import combinations_with_replacement
 from scipy import spatial
 
-depth = 10
+depth = 5
 desiredgames = 100
 
 
@@ -58,14 +59,15 @@ def defineRep(pgnfilepath):
     return pos_dict
 
 library = [
-'pgns/vera90-bullet-ta.pgn',
-'pgns/Gholami_Orimi_A-TA.pgn',
-'pgns/Fuger-blitz.pgn',
-'pgns/ChessGrunt2002-bullet.pgn',
+'pgns/sp1',
+'pgns/sp2',
+'pgns/sp3',
 'pgns/TheFinnisher.pgn',
-'pgns/MMichael.pgn']
+'pgns/MMichael.pgn',
+'pgns/MG1',
+'pgns/MG2']
 
-#print(defineRep(library[1]))
+library = sorted(library, reverse=True)
 
 def compareReps(rep1, rep2):
     def standardise(moves1, moves2):
@@ -82,7 +84,7 @@ def compareReps(rep1, rep2):
         cos = 1 - spatial.distance.cosine(moves1, moves2)
         if not np.isnan(cos):
             score += cos
-    return math.log(score)
+    return math.sqrt(score)
 
 reps = {}
 for player in library:
@@ -91,10 +93,9 @@ for player in library:
 
 df = pd.DataFrame(columns=['p1', 'p2', 'score'])
 
-for player1 in reps:
-    for player2 in reps:
-        df_add = pd.DataFrame({'p1': [player1], 'p2': [player2], 'score': [compareReps(reps[player1], reps[player2])]})
-        df = df.append(df_add, ignore_index=True)
+for (player1, player2) in combinations_with_replacement(reps, 2):
+    df_add = pd.DataFrame({'p1': [player1], 'p2': [player2], 'score': [compareReps(reps[player1], reps[player2])]})
+    df = df.append(df_add, ignore_index=True)
 
 df = pd.crosstab(df.p1, df.p2, values=df.score, aggfunc=sum)
 
